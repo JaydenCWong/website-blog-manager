@@ -32,7 +32,16 @@
 
     let { title, slug, excerpt, tags }: Props = $props();
 
-    let today = new Date().toISOString().split("T")[0];
+    // Use local date (not UTC)
+    function getLocalDate() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    let today = $derived(getLocalDate());
 </script>
 
 <div class="preview">
