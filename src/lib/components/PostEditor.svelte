@@ -157,6 +157,7 @@
                 class="btn btn-secondary"
                 onclick={loadPosts}
                 disabled={isLoadingPosts}
+                title="Refresh posts"
             >
                 <svg
                     width="14"
@@ -274,7 +275,7 @@
                         ></textarea>
                     </div>
                     <div class="form-group tags-input">
-                        <label>Tags</label>
+                        <label for="edit-tags">Tags</label>
                         <TagInput bind:tags={editTags} />
                     </div>
                 </div>

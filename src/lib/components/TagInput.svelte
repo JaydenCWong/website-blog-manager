@@ -59,6 +59,7 @@
                     type="button"
                     class="remove-tag"
                     onclick={() => removeTag(tag)}
+                    title="Remove tag"
                 >
                     <svg
                         width="12"

@@ -166,18 +166,7 @@
             <textarea
                 class="content-editor"
                 bind:value={content}
-                placeholder="# Your Post Title
-
-Write your blog post content here using **Markdown**...
-
-## Section Heading
-
-- List item 1
-- List item 2
-
-> Quote or callout
-
-`inline code` or code blocks with triple backticks"
+                placeholder="# Your Post Title&#10;&#10;Write your blog post content here using **Markdown**...&#10;&#10;## Section Heading&#10;&#10;- List item 1&#10;- List item 2&#10;&#10;> Quote or callout&#10;&#10;`inline code` or code blocks with triple backticks"
             ></textarea>
         </div>
 
@@ -216,7 +205,7 @@ Write your blog post content here using **Markdown**...
             </div>
 
             <div class="form-group tags-input">
-                <label>Tags</label>
+                <label for="tags">Tags</label>
                 <TagInput bind:tags />
             </div>
 
