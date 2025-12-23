@@ -1,8 +1,16 @@
 <script lang="ts">
     import { settings } from "../stores/settings";
 
-    let repoPath = $state($settings.repoPath);
+    let repoPath = $state("");
     let isSaved = $state(false);
+
+    // Subscribe to settings store
+    $effect(() => {
+        const unsubscribe = settings.subscribe((s) => {
+            repoPath = s.repoPath;
+        });
+        return unsubscribe;
+    });
 
     function handleSubmit(e: Event) {
         e.preventDefault();
@@ -80,7 +88,7 @@
 │   └── routes/
 │       └── blog/
 │           ├── +page.svelte  ← Blog listing
-│           └── {slug}/       ← Post directories
+│           └── [slug]/       ← Post directories
 │               └── +page.md</code
             ></pre>
     </div>

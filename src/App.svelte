@@ -4,10 +4,29 @@
   import Settings from "./lib/components/Settings.svelte";
   import { settings } from "./lib/stores/settings";
 
-  let activeTab = $state<"posts" | "references" | "settings">("posts");
+  type Tab = "posts" | "references" | "settings";
 
-  // Check if repo path is configured
-  let needsSetup = $derived(!$settings.repoPath);
+  let activeTab = $state<Tab>("posts");
+  let repoPath = $state("");
+
+  // Subscribe to settings store using $effect
+  $effect(() => {
+    const unsubscribe = settings.subscribe((s) => {
+      repoPath = s.repoPath;
+    });
+    return unsubscribe;
+  });
+
+  // Derived state for setup check
+  let needsSetup = $derived(!repoPath);
+
+  function handleTabClick(tab: Tab) {
+    return () => {
+      console.log("Tab clicked:", tab, "Current activeTab:", activeTab);
+      activeTab = tab;
+      console.log("After update:", activeTab);
+    };
+  }
 </script>
 
 <div class="app">
@@ -32,7 +51,7 @@
       <button
         class="tab"
         class:active={activeTab === "posts"}
-        onclick={() => (activeTab = "posts")}
+        onclick={handleTabClick("posts")}
       >
         <svg
           width="16"
@@ -48,14 +67,13 @@
           <polyline points="14 2 14 8 20 8" />
           <line x1="16" y1="13" x2="8" y2="13" />
           <line x1="16" y1="17" x2="8" y2="17" />
-          <polyline points="10 9 9 9 8 9" />
         </svg>
         New Post
       </button>
       <button
         class="tab"
         class:active={activeTab === "references"}
-        onclick={() => (activeTab = "references")}
+        onclick={handleTabClick("references")}
       >
         <svg
           width="16"
@@ -75,7 +93,7 @@
       <button
         class="tab"
         class:active={activeTab === "settings"}
-        onclick={() => (activeTab = "settings")}
+        onclick={handleTabClick("settings")}
       >
         <svg
           width="16"
@@ -96,17 +114,16 @@
   </header>
 
   <main class="app-main">
-    {#if needsSetup}
+    {#if activeTab === "settings"}
+      <Settings />
+    {:else if needsSetup}
       <div class="setup-notice">
         <div class="setup-icon">⚙️</div>
         <h2>Welcome to Blog Manager</h2>
         <p>
           To get started, configure your website repository path in Settings.
         </p>
-        <button
-          class="btn btn-primary"
-          onclick={() => (activeTab = "settings")}
-        >
+        <button class="btn btn-primary" onclick={handleTabClick("settings")}>
           Go to Settings
         </button>
       </div>
@@ -114,8 +131,6 @@
       <PostForm />
     {:else if activeTab === "references"}
       <BibManager />
-    {:else if activeTab === "settings"}
-      <Settings />
     {/if}
   </main>
 </div>
