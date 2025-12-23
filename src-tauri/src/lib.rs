@@ -1,7 +1,7 @@
 mod blog;
 mod bibtex;
 
-use blog::{create_blog_post, get_existing_posts, slugify};
+use blog::{create_blog_post, get_existing_posts, read_post, update_post, slugify};
 use bibtex::{read_bib_file, sync_references};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -21,6 +21,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             create_blog_post,
             get_existing_posts,
+            read_post,
+            update_post,
             slugify,
             read_bib_file,
             sync_references,

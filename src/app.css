@@ -1,9 +1,12 @@
 /* ============================================
    Blog Manager - Global Styles
-   Dark theme matching the main website
+   Dark/Light theme support
    ============================================ */
 
+/* Dark theme (default) */
 :root {
+  --color-scheme: dark;
+
   /* Colors */
   --color-bg-primary: #0a0a0f;
   --color-bg-secondary: #12121a;
@@ -60,6 +63,32 @@
   --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.2);
 }
 
+/* Light theme */
+[data-theme="light"] {
+  --color-scheme: light;
+
+  --color-bg-primary: #f8fafc;
+  --color-bg-secondary: #f1f5f9;
+  --color-bg-card: #ffffff;
+  --color-bg-hover: #e2e8f0;
+
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
+
+  --color-accent: #2563eb;
+  --color-accent-light: #3b82f6;
+  --color-accent-dark: #1d4ed8;
+
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.15);
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+}
+
 /* Reset */
 *,
 *::before,
@@ -78,6 +107,7 @@ body {
   color: var(--color-text-primary);
   background: var(--color-bg-primary);
   -webkit-font-smoothing: antialiased;
+  color-scheme: var(--color-scheme);
 }
 
 #app {
@@ -179,6 +209,11 @@ textarea::placeholder {
   color: var(--color-text-muted);
 }
 
+/* Prevent textarea resize breaking layout */
+textarea {
+  resize: none;
+}
+
 label {
   display: block;
   font-size: var(--font-size-sm);
@@ -212,6 +247,26 @@ label {
   border-radius: var(--radius-lg);
   color: var(--color-error);
   font-size: var(--font-size-sm);
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-hover);
 }
 
 /* Scrollbar */

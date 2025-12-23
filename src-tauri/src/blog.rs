@@ -7,6 +7,7 @@ pub struct PostMetadata {
     pub title: String,
     pub slug: String,
     pub excerpt: String,
+    pub content: String,
     pub tags: Vec<String>,
     pub date: String,
     pub keywords: String,
@@ -27,6 +28,13 @@ fn generate_post_template(metadata: &PostMetadata) -> String {
         .map(|t| format!("\"{}\"", t))
         .collect::<Vec<_>>()
         .join(", ");
+    
+    // Use provided content or default placeholder
+    let post_content = if metadata.content.is_empty() {
+        format!("# {}\n\n<!-- Write your content here -->", metadata.title)
+    } else {
+        metadata.content.clone()
+    };
 
     format!(
         r#"<script context="module">
@@ -76,9 +84,7 @@ fn generate_post_template(metadata: &PostMetadata) -> String {
         
         <div class="post-content">
 
-# {}
-
-<!-- Write your content here -->
+{}
 
         </div>
         
@@ -124,7 +130,7 @@ fn generate_post_template(metadata: &PostMetadata) -> String {
         metadata.date,
         metadata.excerpt,
         tags_str,
-        metadata.title
+        post_content
     )
 }
 
@@ -159,6 +165,7 @@ pub fn create_blog_post(
     title: String,
     slug: String,
     excerpt: String,
+    content: String,
     tags: Vec<String>,
     keywords: String,
 ) -> Result<String, String> {
@@ -168,6 +175,7 @@ pub fn create_blog_post(
         title: title.clone(),
         slug: slug.clone(),
         excerpt,
+        content,
         tags,
         date,
         keywords,
@@ -275,3 +283,142 @@ pub fn slugify(text: String) -> String {
         .collect::<Vec<_>>()
         .join("-")
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PostContent {
+    pub slug: String,
+    pub title: String,
+    pub date: String,
+    pub excerpt: String,
+    pub tags: Vec<String>,
+    pub content: String,
+}
+
+/// Read a post's content from the file system
+#[tauri::command]
+pub fn read_post(repo_path: String, slug: String) -> Result<PostContent, String> {
+    let post_file = Path::new(&repo_path)
+        .join("src")
+        .join("routes")
+        .join("blog")
+        .join(&slug)
+        .join("+page.md");
+
+    if !post_file.exists() {
+        return Err(format!("Post not found: {}", slug));
+    }
+
+    let file_content = fs::read_to_string(&post_file)
+        .map_err(|e| format!("Failed to read post: {}", e))?;
+
+    // Parse metadata from the file
+    let mut title = slug.replace('-', " ");
+    let mut date = String::new();
+    let mut excerpt = String::new();
+    let mut tags = Vec::new();
+    let mut content = String::new();
+
+    // Extract metadata from script block
+    if let Some(start) = file_content.find("export const metadata = {") {
+        if let Some(end) = file_content[start..].find("};") {
+            let metadata_block = &file_content[start..start + end + 2];
+            
+            // Extract title
+            if let Some(title_start) = metadata_block.find("title: \"") {
+                let title_rest = &metadata_block[title_start + 8..];
+                if let Some(title_end) = title_rest.find("\"") {
+                    title = title_rest[..title_end].to_string();
+                }
+            }
+            
+            // Extract date
+            if let Some(date_start) = metadata_block.find("date: \"") {
+                let date_rest = &metadata_block[date_start + 7..];
+                if let Some(date_end) = date_rest.find("\"") {
+                    date = date_rest[..date_end].to_string();
+                }
+            }
+            
+            // Extract excerpt
+            if let Some(excerpt_start) = metadata_block.find("excerpt: \"") {
+                let excerpt_rest = &metadata_block[excerpt_start + 10..];
+                if let Some(excerpt_end) = excerpt_rest.find("\"") {
+                    excerpt = excerpt_rest[..excerpt_end].to_string();
+                }
+            }
+            
+            // Extract tags
+            if let Some(tags_start) = metadata_block.find("tags: [") {
+                let tags_rest = &metadata_block[tags_start + 7..];
+                if let Some(tags_end) = tags_rest.find("]") {
+                    let tags_str = &tags_rest[..tags_end];
+                    tags = tags_str
+                        .split(',')
+                        .map(|t| t.trim().trim_matches('"').to_string())
+                        .filter(|t| !t.is_empty())
+                        .collect();
+                }
+            }
+        }
+    }
+
+    // Extract content from post-content div
+    if let Some(content_start) = file_content.find("<div class=\"post-content\">") {
+        let after_div = &file_content[content_start + 26..];
+        if let Some(content_end) = after_div.find("</div>") {
+            content = after_div[..content_end].trim().to_string();
+        }
+    }
+
+    Ok(PostContent {
+        slug,
+        title,
+        date,
+        excerpt,
+        tags,
+        content,
+    })
+}
+
+/// Update an existing post
+#[tauri::command]
+pub fn update_post(
+    repo_path: String,
+    slug: String,
+    title: String,
+    excerpt: String,
+    content: String,
+    tags: Vec<String>,
+) -> Result<String, String> {
+    let post_file = Path::new(&repo_path)
+        .join("src")
+        .join("routes")
+        .join("blog")
+        .join(&slug)
+        .join("+page.md");
+
+    if !post_file.exists() {
+        return Err(format!("Post not found: {}", slug));
+    }
+
+    // Read existing content to preserve date
+    let existing = read_post(repo_path.clone(), slug.clone())?;
+    
+    let metadata = PostMetadata {
+        title,
+        slug: slug.clone(),
+        excerpt,
+        content,
+        tags,
+        date: existing.date,
+        keywords: String::new(),
+    };
+
+    let post_content = generate_post_template(&metadata);
+    
+    fs::write(&post_file, post_content)
+        .map_err(|e| format!("Failed to write post: {}", e))?;
+
+    Ok(format!("Updated post: {}", slug))
+}
+
